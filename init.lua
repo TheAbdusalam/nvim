@@ -289,6 +289,14 @@ vim.keymap.set({ 'n', 'v', 'i' }, '<C-s>', '<Esc>:w<cr>')
 vim.keymap.set({ 'n', 'i', 'v' }, '<C-n>', '<C-^>')
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 
+-- Keymaps for better window navigation
+-- Move between windows with Ctrl + h/j/k/l
+vim.keymap.set({ 'n' }, '<C-h>', '<C-w>h')
+vim.keymap.set({ 'n' }, '<C-j>', '<C-w>j')
+vim.keymap.set({ 'n' }, '<C-k>', '<C-w>k')
+vim.keymap.set({ 'n' }, '<C-l>', '<C-w>l')
+
+
 -- Keymaps for better netrw experience
 -- toggle netrw in a vertical split and resize it to 3:1 of the screen
 vim.keymap.set({ 'n' }, '<leader>ne', function()

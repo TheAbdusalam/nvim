@@ -4,6 +4,22 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+local function run_and_display(command)
+  local output = vim.fn.system(command)
+  -- open a vertical split and resize it to 3:1 of the screen to the left
+  vim.cmd 'vsplit'
+  vim.cmd 'vertical resize 30'
+  -- open a new buffer in the vertical split
+  vim.cmd 'enew'
+
+  local buf = vim.api.nvim_get_current_buf() -- Gets the current buffer
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(output, "\n"))
+end
+
+vim.keymap.set('n', '<leader>l', function()
+  run_and_display("go run main.go")
+end, { desc = 'Run go main' })
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -38,6 +54,13 @@ require('lazy').setup({
 
   -- Use copilot, please don't tell my family
   'github/copilot.vim',
+
+  -- Autopairsconteconte
+  {
+    'windwp/nvim-autopairs',
+    event = "InsertEnter",
+    opts = {}, -- this is equalent to setup({}) function
+  },
 
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
@@ -167,11 +190,53 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
-        icons_enabled = false,
-        theme = 'moonbow',
-        component_separators = '|',
-        section_separators = '',
+        icons_enabled = true, -- Set to false if you prefer not having icons
+        theme = 'auto',       -- Automatically sets the theme based on your Neovim theme
+        component_separators = { left = '|', right = '|' },
+        section_separators = { left = '', right = '' },
+        disabled_filetypes = {},
+        always_divide_middle = true,
       },
+      sections = {
+        lualine_a = { 'mode' }, -- Shows the current mode (like NORMAL, INSERT)
+        lualine_b = { 'branch', 'diff',
+          {
+            'diagnostics',
+            sources = { 'nvim_diagnostic' },
+            symbols = { error = ' ', warn = ' ', info = ' ' }
+          }
+        },
+        lualine_c = {
+          {
+            'buffers',
+            symbols = {
+              alternate_file = '', -- Don't show symbol for alternate file
+              modified = ' ●', -- Symbol for modified buffer
+              directory = '' -- Symbol for directory
+            },
+            buffers_color = {
+              -- Function that determines buffer color
+              active = 'lualine_a_normal',     -- Color for active buffer
+              inactive = 'lualine_b_inactive', -- Color for inactive buffer
+            },
+          }
+        },
+        lualine_x = { 'filetype' }, -- Shows the filetype
+        lualine_y = { 'progress' }, -- Shows the progress in the file
+        lualine_z = { 'location' }  -- Shows the cursor location
+      },
+      inactive_sections = {
+        lualine_a = {},
+        lualine_b = {},
+        lualine_c = { 'filename' },
+        lualine_x = { 'location' },
+        lualine_y = {},
+        lualine_z = {}
+      },
+      tabline = {
+        lualine_z = { 'tabs' }
+      },
+      extensions = { 'fugitive' }
     },
   },
 
@@ -217,6 +282,17 @@ require('lazy').setup({
     build = ':TSUpdate',
   },
 
+  -- TODO comments plugins
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  },
+
   -- Configure harpoon
   {
     'ThePrimeagen/harpoon',
@@ -246,7 +322,7 @@ require('lazy').setup({
 vim.o.hlsearch = false
 
 -- Make line numbers default
-vim.wo.number = true
+vim.wo.rnu = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
@@ -287,14 +363,21 @@ vim.keymap.set({ 'i' }, 'jj', '<Esc>')
 vim.keymap.set({ 'n' }, ';', '<Esc>:')
 vim.keymap.set({ 'n', 'v', 'i' }, '<C-s>', '<Esc>:w<cr>')
 vim.keymap.set({ 'n', 'i', 'v' }, '<C-n>', '<C-^>')
+vim.keymap.set({ 'n' }, '<leader>xx', ':w<cr> :so %<cr>', { desc = 'Source current file' })
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
+vim.api.nvim_set_keymap('n', '<leader>if', 'oif err != nil {\n} <Esc>O', { noremap = true, silent = true })
+
+require('which-key').register({
+  ['<leader>'] = { name = 'Leader' },
+  ['<leader>xx'] = { 'Source current file' },
+}, { mode = 'n' })
 
 -- Keymaps for better window navigation
 -- Move between windows with Ctrl + h/j/k/l
 vim.keymap.set({ 'n' }, '<C-h>', '<C-w>h')
 vim.keymap.set({ 'n' }, '<C-j>', '<C-w>j')
 vim.keymap.set({ 'n' }, '<C-k>', '<C-w>k')
-vim.keymap.set({ 'n' }, '<C-l>', '<C-w>l')
+vim.keymap.set({ 'n' }, '<C-l>l', '<C-w>l')
 
 
 -- Keymaps for better netrw experience
@@ -304,8 +387,16 @@ vim.keymap.set({ 'n' }, '<leader>ne', function()
   if vim.bo.filetype == 'netrw' then
     vim.cmd 'q'
   else
-    vim.cmd 'Lexplore'
+    -- open the folder of the current file
+    local current_dir = vim.fn.expand '%:p:h'
+    local command = 'Lex ' .. current_dir
+    local file_name = '/' .. vim.fn.expand '%:t'
+
+    vim.cmd(command)
+
+    -- open netrw in a vertical split and resize it to 3:1 of the screen
     vim.cmd 'vertical resize 30'
+    vim.cmd(file_name)
   end
 end, { desc = 'Open [N]etrw [E]xplore' })
 
@@ -419,7 +510,7 @@ vim.defer_fn(function()
     ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim',
       'bash' },
 
-    -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
+    -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!!)
     auto_install = false,
     -- Install languages synchronously (only applied to `ensure_installed`)
     sync_install = false,

@@ -1,24 +1,9 @@
+-- require lua.custom folder
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-
-local function run_and_display(command)
-  local output = vim.fn.system(command)
-  -- open a vertical split and resize it to 3:1 of the screen to the left
-  vim.cmd 'vsplit'
-  vim.cmd 'vertical resize 30'
-  -- open a new buffer in the vertical split
-  vim.cmd 'enew'
-
-  local buf = vim.api.nvim_get_current_buf() -- Gets the current buffer
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(output, "\n"))
-end
-
-vim.keymap.set('n', '<leader>l', function()
-  run_and_display("go run main.go")
-end, { desc = 'Run go main' })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -323,6 +308,7 @@ vim.o.hlsearch = false
 
 -- Make line numbers default
 vim.wo.rnu = true
+vim.wo.number = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
@@ -362,10 +348,15 @@ vim.o.termguicolors = true
 vim.keymap.set({ 'i' }, 'jj', '<Esc>')
 vim.keymap.set({ 'n' }, ';', '<Esc>:')
 vim.keymap.set({ 'n', 'v', 'i' }, '<C-s>', '<Esc>:w<cr>')
-vim.keymap.set({ 'n', 'i', 'v' }, '<C-n>', '<C-^>')
 vim.keymap.set({ 'n' }, '<leader>xx', ':w<cr> :so %<cr>', { desc = 'Source current file' })
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 vim.api.nvim_set_keymap('n', '<leader>if', 'oif err != nil {\n} <Esc>O', { noremap = true, silent = true })
+
+-- toggle between last two buffers
+vim.keymap.set({ 'n' }, '<leader>jj', function()
+  vim.cmd 'b#'
+end
+, { desc = 'Toggle between last two buffers' })
 
 require('which-key').register({
   ['<leader>'] = { name = 'Leader' },
@@ -377,7 +368,7 @@ require('which-key').register({
 vim.keymap.set({ 'n' }, '<C-h>', '<C-w>h')
 vim.keymap.set({ 'n' }, '<C-j>', '<C-w>j')
 vim.keymap.set({ 'n' }, '<C-k>', '<C-w>k')
-vim.keymap.set({ 'n' }, '<C-l>l', '<C-w>l')
+vim.keymap.set({ 'n' }, '<C-;>', '<C-w>l')
 
 
 -- Keymaps for better netrw experience
